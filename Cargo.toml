@@ -1,0 +1,32 @@
+[package]
+name = "rsrq"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aaron Mussig <aaronmussig@gmail.com>"]
+description = "A minimal Redis-backed job queue."
+readme = "README.md"
+repository = "https://github.com/aaronmussig/rsrq"
+license = "GPL-3.0"
+rust-version = "1.64.0"
+
+[dependencies]
+chrono = "0.4.30"
+clap = { version = "4.3.21", features = ["derive"] }
+env_logger = "0.10.0"
+hostname = "0.3.1"
+indicatif = { version = "0.17.6", features = ["tokio"] }
+lazy_static = "1.4.0"
+log = "0.4.20"
+md5 = "0.7.0"
+redis = {version="0.23.2", features=["aio", "tokio-comp", "connection-manager"]}
+regex = "1.9.3"
+serde_json = "1.0.105"
+tempfile = "3.8.0"
+tokio = { version = "1.32.0", features = ["full"] }
+tokio-util = "0.7.8"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true

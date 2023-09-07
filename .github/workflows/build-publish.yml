@@ -1,0 +1,77 @@
+name: Version, build, publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  semantic_release_next_version:
+    name: Next version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          cache: npm
+          node-version: 18
+      - run: npm install
+      - run: npx semantic-release --dry-run
+        id: semantic_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: semantic-release
+          path: |
+            Cargo.toml
+          retention-days: 1
+    outputs:
+      version: ${{ steps.semantic_release.outputs.version }}
+
+  test_rust:
+    name: Build Rust
+    needs: semantic_release_next_version
+    if: needs.semantic_release_next_version.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --all-features
+
+  semantic_release_publish:
+    name: Publish to GitHub
+    needs: test_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          cache: npm
+          node-version: 18
+      - run: npm install
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload_crates:
+    name: Publish to crates.io
+    needs: semantic_release_publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v3
+        with:
+          name: semantic-release
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo publish --token ${CRATES_TOKEN}
+        env:
+          CRATES_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
