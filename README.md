@@ -19,7 +19,13 @@ Feedback and contributions are welcome!
 *Requires Rust 1.70+*
 
 ```shell
+# Crates.io
 cargo install rsrq
+
+# or...
+
+# Bioconda
+conda install -c conda-forge -c bioconda rsrq
 ```
 
 If the command `rsrq` cannot be found after installation, [follow these details](https://doc.rust-lang.org/book/ch14-04-installing-binaries.html).
