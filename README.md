@@ -30,6 +30,9 @@ If the command `rsrq` cannot be found after installation, [follow these details]
 This is not an exhaustive list of commands, help can be viewed by running the `rsrq --help` command.
 
 ```shell
+# Export the Redis connection string
+export REDIS_URL=redis://:your-password@your-endpoint-url
+
 # Enqueue commands in "/tmp/cmds.txt" to the "test" queue.
 rsrq enqueue test /tmp/cmds.txt
 
