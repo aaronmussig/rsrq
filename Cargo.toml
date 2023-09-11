@@ -7,7 +7,7 @@ description = "A minimal Redis-backed job queue."
 readme = "README.md"
 repository = "https://github.com/aaronmussig/rsrq"
 license = "GPL-3.0"
-rust-version = "1.64.0"
+rust-version = "1.70.0"
 
 [dependencies]
 chrono = "0.4.30"
