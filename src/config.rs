@@ -14,11 +14,11 @@ pub const Q_FAILED: &str = "rsrq:failed";
 
 // Hash prefixed
 pub const JOB_KEY: &str = "rsrq:job";
-pub const WORKER_KEY: &str = "rsrq:worker";
+
+pub const PROC_KEY: &str = "rsrq:proc";
 
 // Auto-incrementing UID for worker and jobs
 pub const UID_KEY_JOB: &str = "rsrq:uid:job";
-pub const UID_KEY_WORKER: &str = "rsrq:uid:worker";
-
+pub const UID_KEY_PROC: &str = "rsrq:uid:proc";
 
 // TODO: SET TTL VALUES & redis timeout

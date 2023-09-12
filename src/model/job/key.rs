@@ -18,6 +18,7 @@ pub enum JobKey {
     Stderr,
     ExitCode,
     DurationMs,
+    ProcessId,
 }
 
 impl JobKey {
@@ -34,6 +35,7 @@ impl JobKey {
             "stderr" => Ok(JobKey::Stderr),
             "exit_code" => Ok(JobKey::ExitCode),
             "duration_ms" => Ok(JobKey::DurationMs),
+            "process_id" => Ok(JobKey::ProcessId),
             _ => Err(RsrqError::ParserError(value.to_string())),
         }
     }
@@ -53,6 +55,7 @@ impl fmt::Display for JobKey {
             JobKey::Stderr => write!(f, "stderr"),
             JobKey::ExitCode => write!(f, "exit_code"),
             JobKey::DurationMs => write!(f, "duration_ms"),
+            JobKey::ProcessId => write!(f, "process_id"),
         }
     }
 }

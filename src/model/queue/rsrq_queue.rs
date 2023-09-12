@@ -98,7 +98,7 @@ impl Queue {
             }
         };
         let q_target = Queue::new(QueueType::Running, &self.name);
-        let job_id: Option<usize> = con.lmove(&self.key, &q_target.key, redis::Direction::Left, redis::Direction::Right).await.map_err(RsrqError::RedisOpError)?;
+        let job_id: Option<usize> = con.lmove(&self.key, &q_target.key, redis::Direction::Right, redis::Direction::Left).await.map_err(RsrqError::RedisOpError)?;
         Ok(job_id)
     }
 

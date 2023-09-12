@@ -12,9 +12,9 @@ use crate::model::queue::queue_type::QueueType;
 use crate::model::queue::rsrq_queue::Queue;
 use crate::model::types::{JobFuture, RsrqResult, WorkerMsgSend};
 use crate::model::worker::message::WorkerMessage;
-use crate::util::redis::redis_con_manager;
 
 pub struct WorkerPool {
+    pub proc_id: usize,
     pub last_check_time: std::time::Instant,
     pub futures: HashMap<usize, JobFuture>,
     pub tx: WorkerMsgSend,
@@ -30,8 +30,8 @@ pub struct WorkerPool {
 }
 
 impl WorkerPool {
-    pub async fn new(queue: &str, max_jobs: Option<u32>, max_runtime_secs: Option<u64>, max_workers: u32, poll_ms: u64, burst: bool, tx: &WorkerMsgSend) -> RsrqResult<WorkerPool> {
-        let mut con = redis_con_manager().await?;
+    pub async fn new(proc_id: usize, queue: &str, max_jobs: Option<u32>, max_runtime_secs: Option<u64>, max_workers: u32, poll_ms: u64, burst: bool, tx: &WorkerMsgSend, con: &ConnectionManager) -> RsrqResult<WorkerPool> {
+        let mut con = con.clone();
         let q = Queue::new(QueueType::Queued, queue);
 
         let progress = {
@@ -48,6 +48,7 @@ impl WorkerPool {
         };
 
         Ok(WorkerPool {
+            proc_id,
             last_check_time: std::time::Instant::now(),
             futures: HashMap::new(),
             tx: tx.clone(),
@@ -129,8 +130,9 @@ impl WorkerPool {
         let queue_clone = self.queue.name.to_string();
         let mut manager_copy = self.con.clone();
         let tx = self.tx.clone();
+        let proc_id = self.proc_id;
         let thread = tokio::spawn(async move {
-            let res = worker_async_on_job_id(job_id, queue_clone, &mut manager_copy).await;
+            let res = worker_async_on_job_id(proc_id, job_id, queue_clone, &mut manager_copy).await;
             let _ = tx.send(WorkerMessage::finished_job(job_id)).await;
             res
         });

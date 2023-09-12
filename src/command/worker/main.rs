@@ -2,10 +2,12 @@ use log::{info, warn};
 use tokio::sync::mpsc;
 
 use crate::command::worker::util::{create_wake_thread, get_max_runtime, parse_num_workers};
+use crate::model::process::rsrq_process::Process;
 use crate::model::shutdown_handler::ShutdownHandler;
 use crate::model::types::{RsrqResult, WorkerMsgRec, WorkerMsgSend};
 use crate::model::worker::message::{WorkerMessage, WorkerMessageReason};
 use crate::model::worker::pool::WorkerPool;
+use crate::util::redis::redis_con_manager;
 
 /// The main entry point for running the worker.
 pub async fn run_workers(queue: &str, workers: u16, max_secs: &Option<String>, max_jobs: Option<u32>, burst: bool, poll: u64) -> RsrqResult<()> {
@@ -25,11 +27,17 @@ pub async fn run_workers(queue: &str, workers: u16, max_secs: &Option<String>, m
         info!("Starting {} workers to process queue: {}", max_workers, queue);
     }
 
+    // Connect to the database
+    let mut con = redis_con_manager().await?;
+
+    // Register the spawning of this process
+    let mut proc = Process::new(queue, max_workers, max_runtime_secs, max_jobs, burst, poll, &mut con).await?;
+
     // Finished jobs and exit handlers will communicate with the main loop via this channel
     let (tx, mut rx): (WorkerMsgSend, WorkerMsgRec) = mpsc::channel(workers as usize * 10);
 
     // Create a worker pool to start/end jobs
-    let mut pool = WorkerPool::new(queue, max_jobs, max_runtime_secs, max_workers, poll, burst, &tx).await?;
+    let mut pool = WorkerPool::new(proc.id, queue, max_jobs, max_runtime_secs, max_workers, poll, burst, &tx, &con).await?;
 
     /*
     The ShutdownHandler is responsible for stopping the program by sending a message to the channel.
@@ -90,6 +98,9 @@ pub async fn run_workers(queue: &str, workers: u16, max_secs: &Option<String>, m
 
                 // Start new jobs if possible
                 pool.maybe_start_new_jobs().await?;
+
+                // Update the last heartbeat from this process
+                proc.update_running(pool.futures.len(), &mut con).await?;
             }
         }
     }
@@ -102,6 +113,9 @@ pub async fn run_workers(queue: &str, workers: u16, max_secs: &Option<String>, m
     for (_, future) in pool.futures {
         let _ = future.await;
     }
+
+    // Delete the process
+    proc.delete(&mut con).await?;
 
     Ok(())
 }

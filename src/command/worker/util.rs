@@ -6,13 +6,11 @@ use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
 use crate::model::error::RsrqError;
-use crate::model::job::rsrq_job::Job;
 use crate::model::job::key::JobKey;
+use crate::model::job::rsrq_job::Job;
 use crate::model::job::status::JobStatus;
 use crate::model::types::RsrqResult;
-use crate::model::worker::key::WorkerKey;
 use crate::model::worker::message::WorkerMessage;
-use crate::model::worker::rsrq_worker::Worker;
 
 lazy_static! {
     static ref RE_MAX_DURATION: Regex =  Regex::new(r"(\d+)(\w)").unwrap();
@@ -30,18 +28,14 @@ pub fn parse_num_workers(num_workers: u16, max_iter: Option<u32>) -> u32 {
     num_workers as u32
 }
 
-pub async fn update_redis_start_job(worker: &Worker, job: &Job, start_ts: &str, con: &mut ConnectionManager) -> RsrqResult<()> {
-    let worker_arr = [
-        (WorkerKey::CurrentJob, &job.id.to_string()),
-        (WorkerKey::CurrentJobStart, &start_ts.to_string()),
-    ];
+pub async fn update_redis_start_job(proc_id: usize, job: &Job, start_ts: &str, con: &mut ConnectionManager) -> RsrqResult<()> {
     let job_arr = [
-        (JobKey::Status, &JobStatus::Running.to_string()),
-        (JobKey::Started, &start_ts.to_string())
+        (JobKey::Status, JobStatus::Running.to_string()),
+        (JobKey::Started, start_ts.to_string()),
+        (JobKey::ProcessId, proc_id.to_string())
     ];
     let mut pipe = redis::pipe();
     pipe.atomic();
-    pipe.hset_multiple(&worker.key, &worker_arr);
     pipe.hset_multiple(&job.key, &job_arr);
     pipe.query_async(con).await.map_err(RsrqError::RedisOpError)?;
     Ok(())

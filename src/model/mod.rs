@@ -1,5 +1,4 @@
 pub mod error;
-
 pub mod job;
 pub mod queue;
 pub mod worker;
@@ -9,3 +8,4 @@ pub mod types;
 pub mod command;
 pub mod enqueue_file;
 pub mod cli;
+pub mod process;
