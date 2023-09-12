@@ -47,6 +47,13 @@ pub enum Commands {
         poll: u64,
     },
 
+    /// Check the status of all objects in the Redis database
+    Status {
+        /// The target queue to check (default: all queues).
+        #[clap(long)]
+        queue: Option<String>,
+    },
+
     /// Commands that can be issued by Snakemake for cluster execution.
     Snakemake(SnakemakeArgs),
 
@@ -82,7 +89,7 @@ pub enum SnakemakeCommands {
     Config {
         /// The target directory to write the profile to.
         directory: String,
-    }
+    },
 }
 
 #[derive(Args)]

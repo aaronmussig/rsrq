@@ -45,6 +45,9 @@ rsrq enqueue test /tmp/cmds.txt
 # Spawn 10 workers to process the "test" queue.
 rsrq worker test --workers 10
 
+# Check the status
+rsrq status
+
 # Purge all information from the redis database
 rsrq purge all
 ```

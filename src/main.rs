@@ -10,6 +10,7 @@ use crate::command::snakemake::cancel::snakemake_cancel;
 use crate::command::snakemake::config::snakemake_config;
 use crate::command::snakemake::status::snakemake_status;
 use crate::command::snakemake::submit::snakemake_submit;
+use crate::command::status::check_status::check_status;
 use crate::command::worker::main::run_workers;
 use crate::model::cli::{Cli, Commands, PurgeCommands, SnakemakeCommands};
 use crate::model::queue::queue_type::QueueType;
@@ -47,6 +48,16 @@ async fn main() {
         Commands::Worker { queue, workers, max_duration, max_jobs, burst, poll } => {
             match run_workers(queue, *workers, max_duration, *max_jobs, *burst, *poll).await {
                 Ok(_) => info!("Workers stopped successfully."),
+                Err(e) => {
+                    error!("Error running workers: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        Commands::Status { queue } => {
+            match check_status(queue).await {
+                Ok(_) => {}
                 Err(e) => {
                     error!("Error running workers: {}", e);
                     std::process::exit(1);

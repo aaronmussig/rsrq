@@ -21,6 +21,24 @@ impl Queue {
         }
     }
 
+    pub fn from_key(key: &str) -> RsrqResult<Queue> {
+        let mut splits = key.split(":");
+        let prefix = splits.next().unwrap_or("");
+        let q_type = splits.next().unwrap_or("");
+        let name = splits.next().unwrap_or("");
+        if prefix != "rsrq" {
+            return Err(RsrqError::ParserError("Invalid prefix.".to_string()));
+        }
+        if q_type.is_empty() {
+            return Err(RsrqError::ParserError("Invalid queue type.".to_string()));
+        }
+        if name.is_empty() {
+            return Err(RsrqError::ParserError("Invalid queue name.".to_string()));
+        }
+        let queue_type = QueueType::from_string(&format!("{prefix}:{q_type}"))?;
+        Ok(Queue::new(queue_type, name))
+    }
+
     pub async fn length(&self, con: &mut ConnectionManager) -> RsrqResult<usize> {
         match self.q_type {
             QueueType::Queued => {
