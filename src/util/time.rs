@@ -14,7 +14,7 @@ pub fn get_ms_since(start_time: &std::time::Instant) -> u128 {
     current_time.duration_since(*start_time).as_millis()
 }
 
-pub fn get_timestamp_string() -> String {
-    let local_time = chrono::Local::now();
-    format!("{}", local_time.format("%Y-%m-%d %H:%M:%S"))
-}
+// pub fn get_timestamp_string() -> String {
+//     let local_time = chrono::Local::now();
+//     format!("{}", local_time.format("%Y-%m-%d %H:%M:%S"))
+// }

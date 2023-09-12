@@ -40,7 +40,7 @@ impl WorkerPool {
                 None => n_queued as u64,
                 Some(max_jobs) => cmp::min(max_jobs as u64, n_queued as u64)
             };
-            let mut bar = RsrqProgressBar::new(init_qty, max_jobs, max_runtime_secs)?;
+            let mut bar = RsrqProgressBar::new(init_qty as usize, max_workers, max_jobs, max_runtime_secs)?;
             if n_queued == 0 {
                 bar.tick_waiting()?;
             }
@@ -94,8 +94,8 @@ impl WorkerPool {
         self.n_jobs_started += n_new_jobs_added;
 
         // Update the progress bar
-        let remaining_tasks = n_queued - n_new_jobs_added + self.futures.len();
-        self.update_remaining_tasks(n_new_jobs_added, remaining_tasks).await?;
+        let new_q_len = n_queued - n_new_jobs_added;
+        self.update_remaining_tasks(new_q_len, self.futures.len()).await?;
 
         // Send a message to stop the loop
         if let Some(max_jobs) = self.max_jobs {
@@ -110,7 +110,8 @@ impl WorkerPool {
     }
 
 
-    pub async fn update_remaining_tasks(&mut self, new_jobs_added: usize, remaining_tasks: usize) -> RsrqResult<()> {
+    pub async fn update_remaining_tasks(&mut self, queue_len: usize, running_tasks: usize) -> RsrqResult<()> {
+        let remaining_tasks = queue_len + running_tasks;
         if remaining_tasks == 0 {
             // Exit if we are running in burst mode
             if self.burst {
@@ -121,7 +122,7 @@ impl WorkerPool {
                 debug!("end tick waiting")
             }
         } else {
-            self.progress.tick_running(new_jobs_added as u64, remaining_tasks as u64)?;
+            self.progress.tick_running(queue_len, running_tasks)?;
         }
         Ok(())
     }
@@ -137,10 +138,12 @@ impl WorkerPool {
             res
         });
         self.futures.insert(job_id, thread);
+        self.progress.track_job_start(job_id);
     }
 
     pub fn remove_job(&mut self, job_id: usize) {
         self.futures.remove(&job_id);
+        self.progress.track_job_end(job_id);
     }
 
     pub async fn abort_cancelled(&mut self) -> RsrqResult<()> {

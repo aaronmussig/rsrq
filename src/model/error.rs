@@ -1,4 +1,3 @@
-use indicatif::style::TemplateError;
 use redis::RedisError;
 
 #[derive(Debug)]
@@ -16,7 +15,6 @@ pub enum RsrqError {
     FileReadError(std::io::Error),
     IOError(std::io::Error),
     GeneralError(String),
-    ProgressBarError(TemplateError),
 }
 
 impl std::fmt::Display for RsrqError {
@@ -33,7 +31,6 @@ impl std::fmt::Display for RsrqError {
             RsrqError::InvalidJson(e) => write!(f, "Invalid JSON: {}", e),
             RsrqError::FileNotFound(e) => write!(f, "File not found: {}", e),
             RsrqError::FileReadError(e) => write!(f, "File read error: {}", e),
-            RsrqError::ProgressBarError(e) => write!(f, "Progress bar error: {}", e),
             RsrqError::IOError(e) => write!(f, "IO error: {}", e),
             RsrqError::GeneralError(e) => write!(f, "General error: {}", e),
         }
@@ -54,7 +51,6 @@ impl std::error::Error for RsrqError {
             RsrqError::InvalidJson(_) => None,
             RsrqError::FileNotFound(_) => None,
             RsrqError::FileReadError(_) => None,
-            RsrqError::ProgressBarError(e) => Some(e),
             RsrqError::IOError(e) => Some(e),
             RsrqError::GeneralError(_) => None,
         }
